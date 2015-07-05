@@ -6,10 +6,10 @@ use warnings FATAL => 'all';
 use Test::More;
 use English qw(-no_match_vars);
 
-plan tests => 1;
+plan tests => 5;
 
 subtest 'Require some module' => sub {
-    plan tests => 5;
+    plan tests => 4;
 
     use_ok 'JIP::Object', '0.01';
 
@@ -24,7 +24,89 @@ subtest 'Require some module' => sub {
     );
 
     can_ok 'JIP::Object', qw(new attr method);
+};
 
-    isa_ok(JIP::Object->new, 'JIP::Object');
+subtest 'new()' => sub {
+    plan tests => 2;
+
+    eval { JIP::Object->new->new } or do {
+        like $EVAL_ERROR, qr{^Class \s already \s blessed}x;
+    };
+
+    my $obj = JIP::Object->new;
+
+    isa_ok $obj, qw(JIP::Object);
+};
+
+subtest 'attr()' => sub {
+    plan tests => 8;
+
+    eval { JIP::Object->attr } or do {
+        like $EVAL_ERROR, qr{^Can't \s call \s "attr" \s as \s a \s class \s method}x;
+    };
+
+    my $obj = JIP::Object->new;
+
+    eval { $obj->attr } or do {
+        like $EVAL_ERROR, qr{^Attribute \s not \s defined}x;
+    };
+    eval { $obj->attr(q{}) } or do {
+        like $EVAL_ERROR, qr{^Attribute \s not \s defined}x;
+    };
+
+    is $obj->attr(attr_1 => (get => q{-}, set => q{-}))->_set_attr_1(1)->_attr_1, 1;
+    is $obj->attr(attr_2 => (get => q{+}, set => q{-}))->_set_attr_2(2)->attr_2,  2;
+    is $obj->attr(attr_3 => (get => q{-}, set => q{+}))->set_attr_3(3)->_attr_3,  3;
+    is $obj->attr(attr_4 => (get => q{+}, set => q{+}))->set_attr_4(4)->attr_4,   4;
+
+    is $obj->attr(attr_5 => (get => q{getter}, set => q{setter}))->setter(5)->getter, 5;
+};
+
+subtest 'method()' => sub {
+    plan tests => 6;
+
+    eval { JIP::Object->method } or do {
+        like $EVAL_ERROR, qr{^Can't \s call \s "method" \s as \s a \s class \s method}x;
+    };
+
+    my $obj = JIP::Object->new;
+
+    eval { $obj->method(undef) } or do {
+        like $EVAL_ERROR, qr{^First \s argument \s must \s be \s a \s non \s empty \s string}x;
+    };
+    eval { $obj->method(q{}) } or do {
+        like $EVAL_ERROR, qr{^First \s argument \s must \s be \s a \s non \s empty \s string}x;
+    };
+    eval { $obj->method(q{foo}, undef) } or do {
+        like $EVAL_ERROR, qr{^Second \s argument \s must \s be \s a \s code \s ref}x;
+    };
+
+    is ref($obj->method('foo', sub {
+        pass 'foo() method is invoked';
+    })), 'JIP::Object';
+
+    $obj->foo;
+};
+
+subtest 'AUTOLOAD()' => sub {
+    plan tests => 4;
+
+    my $obj = JIP::Object->new->attr('foo', get => '+', set => '+')->set_foo(42);
+
+    $obj->method('bar', sub {
+        my ($self, $param) = @ARG;
+
+        is ref($self), 'JIP::Object';
+        is $param, 'Hello';
+        is $self->foo, 42;
+    })->bar('Hello');
+
+    eval { $obj->wtf } or do {
+        like $EVAL_ERROR, qr{
+            ^
+            Can't \s locate \s object \s method \s "wtf"
+            \s in \s this \s instance
+        }x;
+    };
 };
 

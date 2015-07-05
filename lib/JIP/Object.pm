@@ -13,13 +13,17 @@ our $AUTOLOAD;
 sub new {
     my $class = shift;
 
-    croak q{Class already blessed} if blessed($class);
+    croak q{Class already blessed} if blessed $class;
 
     return bless({}, $class)->_set_stash({})->_set_meta({});
 }
 
 sub attr {
     my ($self, $attr, %param) = @ARG;
+
+    croak q{Can't call "attr" as a class method} unless blessed $self;
+
+    croak q{Attribute not defined} unless defined $attr and length $attr;
 
     if (exists $param{'get'}) {
         my ($method_name, $getter) = (q{}, $param{'get'});
@@ -59,22 +63,34 @@ sub attr {
             return $self;
         };
     }
+
+    return $self;
 }
 
 sub method {
     my ($self, $method_name, $code) = @ARG;
 
+    croak q{Can't call "method" as a class method}
+        unless blessed $self;
+
+    croak q{First argument must be a non empty string}
+        unless defined $method_name and length $method_name;
+
+    croak q{Second argument must be a code ref}
+        unless ref($code) eq 'CODE';
+
     $self->_meta->{$method_name} = $code;
+
+    return $self;
 }
 
 sub AUTOLOAD {
     my $self = shift;
 
+    croak q{Can't call "AUTOLOAD" as a class method} unless blessed $self;
+
     my ($package, $sub) = ($AUTOLOAD =~ m{^(.+)::([^:]+)$}x);
     undef $AUTOLOAD;
-
-    croak(sprintf q{Can't locate object method "%s" via package "%s"}, $sub, $package)
-        unless blessed($self);
 
     if (defined(my $code = $self->_meta->{$sub})) {
         $code->($self, @ARG);
