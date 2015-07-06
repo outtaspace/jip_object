@@ -89,7 +89,11 @@ subtest 'method()' => sub {
 };
 
 subtest 'AUTOLOAD()' => sub {
-    plan tests => 4;
+    plan tests => 5;
+
+    eval { JIP::Object->AUTOLOAD } or do {
+        like $EVAL_ERROR, qr{^Can't \s call \s "AUTOLOAD" \s as \s a \s class \s method}x;
+    };
 
     my $obj = JIP::Object->new->attr('foo', get => '+', set => '+')->set_foo(42);
 
