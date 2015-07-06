@@ -3,12 +3,16 @@ package JIP::Object;
 use 5.006;
 use strict;
 use warnings;
+use JIP::ClassField;
 use Carp qw(croak);
 use Scalar::Util qw(blessed);
 use English qw(-no_match_vars);
 
 our $VERSION = '0.01';
 our $AUTOLOAD;
+
+has 'meta'  => (get => '-', set => '-');
+has 'stash' => (get => '-', set => '-');
 
 sub new {
     my $class = shift;
@@ -117,29 +121,6 @@ sub AUTOLOAD {
     else {
         croak(sprintf q{Can't locate object method "%s" in this instance}, $sub);
     }
-}
-
-# private methods
-sub _stash {
-    my $self = shift;
-    return $self->{'stash'};
-}
-
-sub _set_stash {
-    my ($self, $value) = @ARG;
-    $self->{'stash'} = $value;
-    return $self;
-}
-
-sub _meta {
-    my $self = shift;
-    return $self->{'meta'};
-}
-
-sub _set_meta {
-    my ($self, $value) = @ARG;
-    $self->{'meta'} = $value;
-    return $self;
 }
 
 1;
