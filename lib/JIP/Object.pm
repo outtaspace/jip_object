@@ -57,11 +57,30 @@ sub attr {
             $method_name = $setter;
         }
 
-        $self->_meta->{$method_name} = sub {
-            my ($self, $value) = @ARG;
-            $self->_stash->{$attr} = $value;
-            return $self;
-        };
+        if (exists $param{'default'}) {
+            my $default_value = $param{'default'};
+
+            $self->_meta->{$method_name} = sub {
+                my $self = shift;
+
+                if (@ARG == 1) {
+                    $self->_stash->{$attr} = shift;
+                }
+                else {
+                    $self->_stash->{$attr} = ref($default_value) eq 'CODE'
+                        ? $default_value->($self) : $default_value;
+                }
+
+                return $self;
+            };
+        }
+        else {
+            $self->_meta->{$method_name} = sub {
+                my ($self, $value) = @ARG;
+                $self->_stash->{$attr} = $value;
+                return $self;
+            };
+        }
     }
 
     return $self;

@@ -39,7 +39,7 @@ subtest 'new()' => sub {
 };
 
 subtest 'attr()' => sub {
-    plan tests => 8;
+    plan tests => 14;
 
     eval { JIP::Object->attr } or do {
         like $EVAL_ERROR, qr{^Can't \s call \s "attr" \s as \s a \s class \s method}x;
@@ -60,6 +60,22 @@ subtest 'attr()' => sub {
     is $obj->attr(attr_4 => (get => q{+}, set => q{+}))->set_attr_4(4)->attr_4,   4;
 
     is $obj->attr(attr_5 => (get => q{getter}, set => q{setter}))->setter(5)->getter, 5;
+
+    is $obj->attr(attr_6 => (
+        get     => q{+},
+        set     => q{+},
+        default => q{default_value},
+    ))->set_attr_6(42)->attr_6, '42';
+    is $obj->set_attr_6(undef)->attr_6, undef;
+    is $obj->set_attr_6->attr_6, q{default_value};
+
+    is $obj->attr(attr_7 => (
+        get     => q{+},
+        set     => q{+},
+        default => sub { shift->attr_6 },
+    ))->set_attr_7(42)->attr_7, '42';
+    is $obj->set_attr_7(undef)->attr_7, undef;
+    is $obj->set_attr_7->attr_7, q{default_value};
 };
 
 subtest 'method()' => sub {
