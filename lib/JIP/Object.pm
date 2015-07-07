@@ -14,6 +14,17 @@ our $AUTOLOAD;
 has 'meta'  => (get => '-', set => '-');
 has 'stash' => (get => '-', set => '-');
 
+my $maybe_set_subname = sub { $ARG[1]; };
+
+# Will be shipping with Perl 5.22
+eval {
+    require Sub::Util;
+
+    if (my $set_subname = Sub::Util->can('set_subname')) {
+        $maybe_set_subname = $set_subname;
+    }
+};
+
 sub new {
     my $class = shift;
 
@@ -42,10 +53,10 @@ sub attr {
             $method_name = $getter;
         }
 
-        $self->_meta->{$method_name} = sub {
+        $self->_meta->{$method_name} = $maybe_set_subname->($method_name, sub {
             my $self = shift;
             return $self->_stash->{$attr};
-        };
+        });
     }
 
     if (exists $param{'set'}) {
@@ -64,26 +75,31 @@ sub attr {
         if (exists $param{'default'}) {
             my $default_value = $param{'default'};
 
-            $self->_meta->{$method_name} = sub {
+            $self->_meta->{$method_name} = $maybe_set_subname->($method_name, sub {
                 my $self = shift;
 
                 if (@ARG == 1) {
                     $self->_stash->{$attr} = shift;
                 }
+                elsif (ref $default_value eq 'CODE') {
+                    $self->_stash->{$attr} = $maybe_set_subname->(
+                        'default_value',
+                        $default_value,
+                    )->($self);
+                }
                 else {
-                    $self->_stash->{$attr} = ref($default_value) eq 'CODE'
-                        ? $default_value->($self) : $default_value;
+                    $self->_stash->{$attr} = $default_value;
                 }
 
                 return $self;
-            };
+            });
         }
         else {
-            $self->_meta->{$method_name} = sub {
+            $self->_meta->{$method_name} = $maybe_set_subname->($method_name, sub {
                 my ($self, $value) = @ARG;
                 $self->_stash->{$attr} = $value;
                 return $self;
-            };
+            });
         }
     }
 
@@ -102,7 +118,7 @@ sub method {
     croak q{Second argument must be a code ref}
         unless ref($code) eq 'CODE';
 
-    $self->_meta->{$method_name} = $code;
+    $self->_meta->{$method_name} = $maybe_set_subname->($method_name, $code);
 
     return $self;
 }
