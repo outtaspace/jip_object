@@ -3,7 +3,7 @@ package JIP::Object;
 use 5.006;
 use strict;
 use warnings;
-use JIP::ClassField;
+use JIP::ClassField 0.04;
 use Carp qw(croak);
 use Scalar::Util qw(blessed);
 use English qw(-no_match_vars);
@@ -122,6 +122,8 @@ sub AUTOLOAD {
         croak(sprintf q{Can't locate object method "%s" in this instance}, $sub);
     }
 }
+
+JIP::ClassField::cleanup_namespace(qw(has croak blessed));
 
 1;
 
