@@ -124,7 +124,7 @@ sub method {
 }
 
 sub AUTOLOAD {
-    my $self = shift;
+    my ($self) = @ARG;
 
     croak q{Can't call "AUTOLOAD" as a class method} unless blessed $self;
 
@@ -132,7 +132,7 @@ sub AUTOLOAD {
     undef $AUTOLOAD;
 
     if (defined(my $code = $self->_meta->{$sub})) {
-        $code->($self, @ARG);
+        goto &$code;
     }
     else {
         croak(sprintf q{Can't locate object method "%s" in this instance}, $sub);
