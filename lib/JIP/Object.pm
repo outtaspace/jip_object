@@ -123,6 +123,38 @@ sub method {
     return $self;
 }
 
+# http://perldoc.perl.org/perlobj.html#Default-UNIVERSAL-methods
+sub isa {
+    no warnings 'misc';
+    goto &UNIVERSAL::isa;
+}
+
+sub DOES {
+    # DOES is equivalent to isa by default
+    goto &isa;
+}
+
+sub VERSION {
+    no warnings 'misc';
+    goto &UNIVERSAL::VERSION;
+}
+
+sub can {
+    my ($self, $method_name) = @ARG;
+
+    if (blessed $self) {
+        no warnings 'misc';
+        goto &UNIVERSAL::can;
+    }
+    else {
+        my $code;
+        no warnings 'misc';
+        $code = UNIVERSAL::can($self, $method_name);
+
+        return $code;
+    }
+}
+
 sub AUTOLOAD {
     my ($self) = @ARG;
 

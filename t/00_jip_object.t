@@ -6,7 +6,7 @@ use warnings FATAL => 'all';
 use Test::More;
 use English qw(-no_match_vars);
 
-plan tests => 6;
+plan tests => 7;
 
 subtest 'Require some module' => sub {
     plan tests => 4;
@@ -105,7 +105,7 @@ subtest 'method()' => sub {
 };
 
 subtest 'AUTOLOAD()' => sub {
-    plan tests => 5;
+    plan tests => 6;
 
     eval { JIP::Object->AUTOLOAD } or do {
         like $EVAL_ERROR, qr{^Can't \s call \s "AUTOLOAD" \s as \s a \s class \s method}x;
@@ -113,13 +113,17 @@ subtest 'AUTOLOAD()' => sub {
 
     my $obj = JIP::Object->new->attr('foo', get => '+', set => '+')->set_foo(42);
 
-    $obj->method('bar', sub {
+    my $bar_result = $obj->method('bar', sub {
         my ($self, $param) = @ARG;
 
         is ref($self), 'JIP::Object';
         is $param, 'Hello';
         is $self->foo, 42;
+
+        return 'tratata';
     })->bar('Hello');
+
+    is $bar_result, 'tratata';
 
     eval { $obj->wtf } or do {
         like $EVAL_ERROR, qr{
@@ -128,6 +132,22 @@ subtest 'AUTOLOAD()' => sub {
             \s in \s this \s instance
         }x;
     };
+};
+
+subtest 'The Universal class' => sub {
+    plan tests => 6;
+
+    my $obj = JIP::Object->new;
+
+    is $obj->VERSION, '0.01';
+
+    ok $obj->isa('JIP::Object');
+    ok not $obj->isa('JIP::ClassField');
+
+    is $obj->DOES('JIP::Object'),     $obj->isa('JIP::Object');
+    is $obj->DOES('JIP::ClassField'), $obj->isa('JIP::ClassField');
+
+    is ref $obj->can('new'), 'CODE';
 };
 
 subtest 'cleanup_namespace()' => sub {
