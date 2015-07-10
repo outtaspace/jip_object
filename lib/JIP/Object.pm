@@ -155,6 +155,8 @@ sub can {
     }
 }
 
+sub DESTROY {}
+
 sub AUTOLOAD {
     my ($self) = @ARG;
 
