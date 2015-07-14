@@ -135,8 +135,18 @@ subtest 'AUTOLOAD()' => sub {
 };
 
 subtest 'The Universal class' => sub {
-    plan tests => 6;
+    plan tests => 10;
 
+    # Class methods
+    is(JIP::Object->VERSION, '0.01');
+
+    ok(JIP::Object->isa('JIP::Object'));
+
+    ok(JIP::Object->DOES('JIP::Object'));
+
+    is ref JIP::Object->can('new'), 'CODE';
+
+    # Object methods
     my $obj = JIP::Object->new;
 
     is $obj->VERSION, '0.01';
