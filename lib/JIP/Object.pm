@@ -11,6 +11,8 @@ use English qw(-no_match_vars);
 our $VERSION = '0.01';
 our $AUTOLOAD;
 
+has 'proto' => (get => '+', set => '+');
+
 has 'meta'  => (get => '-', set => '-');
 has 'stash' => (get => '-', set => '-');
 
@@ -26,11 +28,22 @@ eval {
 };
 
 sub new {
-    my $class = shift;
+    my ($class, %param) = @ARG;
 
     croak q{Class already blessed} if blessed $class;
 
-    return bless({}, $class)->_set_stash({})->_set_meta({});
+    my $proto;
+    if (exists $param{'proto'}) {
+        $proto = $param{'proto'};
+
+        croak q{Bad argument "proto"}
+            unless (blessed $proto || q{}) eq __PACKAGE__;
+    }
+
+    return bless({}, $class)
+        ->_set_stash({})
+        ->_set_meta({})
+        ->set_proto($proto);
 }
 
 sub attr {
@@ -123,6 +136,14 @@ sub method {
     return $self;
 }
 
+sub own_method {
+    my ($self, $method_name) = @ARG;
+
+    return unless exists $self->_meta->{$method_name};
+
+    return $self->_meta->{$method_name};
+}
+
 # http://perldoc.perl.org/perlobj.html#Default-UNIVERSAL-methods
 sub isa {
     no warnings 'misc';
@@ -162,15 +183,17 @@ sub AUTOLOAD {
 
     croak q{Can't call "AUTOLOAD" as a class method} unless blessed $self;
 
-    my ($package, $sub) = ($AUTOLOAD =~ m{^(.+)::([^:]+)$}x);
+    my ($package, $method_name) = ($AUTOLOAD =~ m{^(.+)::([^:]+)$}x);
     undef $AUTOLOAD;
 
-    if (defined(my $code = $self->_meta->{$sub})) {
-        goto &$code;
-    }
-    else {
-        croak(sprintf q{Can't locate object method "%s" in this instance}, $sub);
-    }
+    my $code = $self->own_method($method_name);
+
+    $code = $self->proto->own_method($method_name)
+        if not defined $code and defined $self->proto;
+
+    goto &$code if defined $code;
+
+    croak(sprintf q{Can't locate object method "%s" in this instance}, $method_name);
 }
 
 JIP::ClassField::cleanup_namespace(qw(has croak blessed));

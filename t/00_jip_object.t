@@ -6,7 +6,7 @@ use warnings FATAL => 'all';
 use Test::More;
 use English qw(-no_match_vars);
 
-plan tests => 7;
+plan tests => 9;
 
 subtest 'Require some module' => sub {
     plan tests => 4;
@@ -23,19 +23,25 @@ subtest 'Require some module' => sub {
             $EXECUTABLE_NAME,
     );
 
-    can_ok 'JIP::Object', qw(new attr method);
+    can_ok 'JIP::Object', qw(new attr method proto set_proto own_method);
 };
 
 subtest 'new()' => sub {
-    plan tests => 2;
+    plan tests => 5;
 
     eval { JIP::Object->new->new } or do {
         like $EVAL_ERROR, qr{^Class \s already \s blessed}x;
+    };
+    eval { JIP::Object->new(proto => 'not blessed val') } or do {
+        like $EVAL_ERROR, qr{^Bad \s argument \s "proto"}x;
     };
 
     my $obj = JIP::Object->new;
 
     isa_ok $obj, qw(JIP::Object);
+    is $obj->proto, undef;
+
+    isa_ok $obj->set_proto(JIP::Object->new)->proto, 'JIP::Object';
 };
 
 subtest 'attr()' => sub {
@@ -104,6 +110,20 @@ subtest 'method()' => sub {
     $obj->foo;
 };
 
+subtest 'own_method()' => sub {
+    plan tests => 2;
+
+    my $obj = JIP::Object->new;
+
+    is $obj->own_method('x'), undef;
+
+    $obj->method('x', sub {
+        return 'from x'
+    });
+
+    is $obj->own_method('x')->(), 'from x';
+};
+
 subtest 'AUTOLOAD()' => sub {
     plan tests => 6;
 
@@ -158,6 +178,23 @@ subtest 'The Universal class' => sub {
     is $obj->DOES('JIP::ClassField'), $obj->isa('JIP::ClassField');
 
     is ref $obj->can('new'), 'CODE';
+};
+
+subtest 'proto' => sub {
+    plan tests => 6;
+
+    my $proto = JIP::Object->new->method('x', sub {
+        pass 'x() method is invoked';
+        return 'from x';
+    });
+
+    my $obj = JIP::Object->new(proto => $proto);
+
+    is $obj->own_method('x'), undef;
+    is ref $proto->own_method('x'), 'CODE';
+
+    is $proto->x, 'from x';
+    is $obj->x,   'from x';
 };
 
 subtest 'cleanup_namespace()' => sub {
