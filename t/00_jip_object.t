@@ -181,20 +181,34 @@ subtest 'The Universal class' => sub {
 };
 
 subtest 'proto' => sub {
-    plan tests => 6;
+    plan tests => 16;
 
-    my $proto = JIP::Object->new->method('x', sub {
+    my $proto_proto = JIP::Object->new->method('x', sub {
         pass 'x() method is invoked';
         return 'from x';
     });
 
+    my $proto = JIP::Object->new(proto => $proto_proto)->method('y', sub {
+        pass 'y() method is invoked';
+        return 'from y';
+    });
+
     my $obj = JIP::Object->new(proto => $proto);
 
-    is $obj->own_method('x'), undef;
-    is ref $proto->own_method('x'), 'CODE';
+    is ref $obj->own_method('x'), q{};
+    is ref $proto->own_method('x'), q{};
+    is ref $proto->proto->own_method('x'), 'CODE';
 
-    is $proto->x, 'from x';
-    is $obj->x,   'from x';
+    is ref $obj->own_method('y'), q{};
+    is ref $proto->own_method('y'), 'CODE';
+    is ref $proto->proto->own_method('y'), q{};
+
+    is $proto_proto->x, 'from x';
+    is $proto->x,       'from x';
+    is $obj->x,         'from x';
+
+    is $proto->y, 'from y';
+    is $obj->y,   'from y';
 };
 
 subtest 'cleanup_namespace()' => sub {

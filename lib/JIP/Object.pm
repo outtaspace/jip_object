@@ -186,14 +186,16 @@ sub AUTOLOAD {
     my ($package, $method_name) = ($AUTOLOAD =~ m{^(.+)::([^:]+)$}x);
     undef $AUTOLOAD;
 
-    my $code = $self->own_method($method_name);
-
-    $code = $self->proto->own_method($method_name)
-        if not defined $code and defined $self->proto;
-
-    goto &$code if defined $code;
-
-    croak(sprintf q{Can't locate object method "%s" in this instance}, $method_name);
+    if (defined(my $code = $self->own_method($method_name))) {
+        goto &$code;
+    }
+    elsif (defined(my $proto = $self->proto)) {
+        shift @ARG;
+        $proto->$method_name(@ARG);
+    }
+    else {
+        croak(sprintf q{Can't locate object method "%s" in this instance}, $method_name);
+    }
 }
 
 JIP::ClassField::cleanup_namespace(qw(has croak blessed));
