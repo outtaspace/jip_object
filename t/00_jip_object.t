@@ -23,7 +23,7 @@ subtest 'Require some module' => sub {
             $EXECUTABLE_NAME,
     );
 
-    can_ok 'JIP::Object', qw(new attr method proto set_proto own_method);
+    can_ok 'JIP::Object', qw(new has method proto set_proto own_method);
 };
 
 subtest 'new()' => sub {
@@ -44,30 +44,30 @@ subtest 'new()' => sub {
     isa_ok $obj->set_proto(JIP::Object->new)->proto, 'JIP::Object';
 };
 
-subtest 'attr()' => sub {
+subtest 'has()' => sub {
     plan tests => 14;
 
-    eval { JIP::Object->attr } or do {
-        like $EVAL_ERROR, qr{^Can't \s call \s "attr" \s as \s a \s class \s method}x;
+    eval { JIP::Object->has } or do {
+        like $EVAL_ERROR, qr{^Can't \s call \s "has" \s as \s a \s class \s method}x;
     };
 
     my $obj = JIP::Object->new;
 
-    eval { $obj->attr } or do {
+    eval { $obj->has } or do {
         like $EVAL_ERROR, qr{^Attribute \s not \s defined}x;
     };
-    eval { $obj->attr(q{}) } or do {
+    eval { $obj->has(q{}) } or do {
         like $EVAL_ERROR, qr{^Attribute \s not \s defined}x;
     };
 
-    is $obj->attr(attr_1 => (get => q{-}, set => q{-}))->_set_attr_1(1)->_attr_1, 1;
-    is $obj->attr(attr_2 => (get => q{+}, set => q{-}))->_set_attr_2(2)->attr_2,  2;
-    is $obj->attr(attr_3 => (get => q{-}, set => q{+}))->set_attr_3(3)->_attr_3,  3;
-    is $obj->attr(attr_4 => (get => q{+}, set => q{+}))->set_attr_4(4)->attr_4,   4;
+    is $obj->has(attr_1 => (get => q{-}, set => q{-}))->_set_attr_1(1)->_attr_1, 1;
+    is $obj->has(attr_2 => (get => q{+}, set => q{-}))->_set_attr_2(2)->attr_2,  2;
+    is $obj->has(attr_3 => (get => q{-}, set => q{+}))->set_attr_3(3)->_attr_3,  3;
+    is $obj->has(attr_4 => (get => q{+}, set => q{+}))->set_attr_4(4)->attr_4,   4;
 
-    is $obj->attr(attr_5 => (get => q{getter}, set => q{setter}))->setter(5)->getter, 5;
+    is $obj->has(attr_5 => (get => q{getter}, set => q{setter}))->setter(5)->getter, 5;
 
-    is $obj->attr(attr_6 => (
+    is $obj->has(attr_6 => (
         get     => q{+},
         set     => q{+},
         default => q{default_value},
@@ -75,7 +75,7 @@ subtest 'attr()' => sub {
     is $obj->set_attr_6(undef)->attr_6, undef;
     is $obj->set_attr_6->attr_6, q{default_value};
 
-    is $obj->attr(attr_7 => (
+    is $obj->has(attr_7 => (
         get     => q{+},
         set     => q{+},
         default => sub { shift->attr_6 },
@@ -131,7 +131,7 @@ subtest 'AUTOLOAD()' => sub {
         like $EVAL_ERROR, qr{^Can't \s call \s "AUTOLOAD" \s as \s a \s class \s method}x;
     };
 
-    my $obj = JIP::Object->new->attr('foo', get => '+', set => '+')->set_foo(42);
+    my $obj = JIP::Object->new->has('foo', get => '+', set => '+')->set_foo(42);
 
     my $bar_result = $obj->method('bar', sub {
         my ($self, $param) = @ARG;

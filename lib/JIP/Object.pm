@@ -40,10 +40,10 @@ sub new {
         ->set_proto($proto);
 }
 
-sub attr {
+sub has {
     my ($self, $attr, %param) = @ARG;
 
-    croak q{Can't call "attr" as a class method} unless blessed $self;
+    croak q{Can't call "has" as a class method} unless blessed $self;
 
     croak q{Attribute not defined} unless defined $attr and length $attr;
 
@@ -238,23 +238,23 @@ Version 0.01
     ok $obj, 'got object';
 
     # Public access to the "foo"
-    $obj->attr('foo', (get => '+', set => '+'));
+    $obj->has('foo', (get => '+', set => '+'));
     is($obj->set_foo(42)->foo, 42);
 
     # Private access to the "bar"
-    $obj->attr('bar', (get => '-', set => '-'));
+    $obj->has('bar', (get => '-', set => '-'));
     is($obj->_set_bar(42)->_bar, 42);
 
     # Create user-defined names for getters/setters
-    $obj->attr('wtf' => (get => 'wtf_getter', set => 'wtf_setter'));
+    $obj->has('wtf' => (get => 'wtf_getter', set => 'wtf_setter'));
     is($obj->wtf_setter(42)->wtf_getter, 42);
 
     # Pass an optional first argument of setter to set
     # a default value, it should be a constant or callback.
-    $obj->attr('baz' => (get => '+', set => '+', default => 42));
+    $obj->has('baz' => (get => '+', set => '+', default => 42));
     is($self->set_baz->baz, 42);
 
-    $obj->attr('qux' => (get => '+', set => '+', default => sub {
+    $obj->has('qux' => (get => '+', set => '+', default => sub {
         my $self = shift;
         return $self->baz;
     }));
@@ -277,9 +277,9 @@ Version 0.01
 
 Construct a new L<JIP::Object> object.
 
-=head2 attr
+=head2 has
 
-    $obj = $obj->attr('x', get => 'x', set => 'set_x');
+    $obj = $obj->has('x', get => 'x', set => 'set_x');
 
 Define a new property.
 
