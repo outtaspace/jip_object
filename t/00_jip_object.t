@@ -6,7 +6,7 @@ use warnings FATAL => 'all';
 use Test::More;
 use English qw(-no_match_vars);
 
-plan tests => 9;
+plan tests => 8;
 
 subtest 'Require some module' => sub {
     plan tests => 4;
@@ -209,13 +209,5 @@ subtest 'proto' => sub {
 
     is $proto->y, 'from y';
     is $obj->y,   'from y';
-};
-
-subtest 'cleanup_namespace()' => sub {
-    plan tests => 3;
-
-    ok(not JIP::Object->can('has'));
-    ok(not JIP::Object->can('croak'));
-    ok(not JIP::Object->can('blessed'));
 };
 

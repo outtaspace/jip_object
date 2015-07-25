@@ -3,18 +3,12 @@ package JIP::Object;
 use 5.006;
 use strict;
 use warnings;
-use JIP::ClassField 0.04;
 use Carp qw(croak);
 use Scalar::Util qw(blessed);
 use English qw(-no_match_vars);
 
 our $VERSION = '0.01';
 our $AUTOLOAD;
-
-has 'proto' => (get => '+', set => '+');
-
-has 'meta'  => (get => '-', set => '-');
-has 'stash' => (get => '-', set => '-');
 
 my $maybe_set_subname = sub { $ARG[1]; };
 
@@ -198,7 +192,30 @@ sub AUTOLOAD {
     }
 }
 
-JIP::ClassField::cleanup_namespace(qw(has croak blessed));
+# private methods
+sub proto {
+    return $ARG[0]->{'proto'};
+}
+sub set_proto {
+    $ARG[0]->{'proto'} = $ARG[1];
+    return $ARG[0];
+}
+
+sub _meta {
+    return $ARG[0]->{'meta'};
+}
+sub _set_meta {
+    $ARG[0]->{'meta'} = $ARG[1];
+    return $ARG[0];
+}
+
+sub _stash {
+    return $ARG[0]->{'stash'};
+}
+sub _set_stash {
+    $ARG[0]->{'stash'} = $ARG[1];
+    return $ARG[0];
+}
 
 1;
 

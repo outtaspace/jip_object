@@ -19,10 +19,9 @@ WriteMakefile(
         'English'    => 0,
     },
     PREREQ_PM => {
-        'Carp'            => 0,
-        'English'         => 0,
-        'Scalar::Util'    => 0,
-        'JIP::ClassField' => '0.04',
+        'Carp'         => 0,
+        'English'      => 0,
+        'Scalar::Util' => 0,
     },
     dist  => {COMPRESS => 'gzip -9f', SUFFIX => 'gz'},
     clean => {FILES => 'JIP-Object-*'},
