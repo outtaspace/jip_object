@@ -254,10 +254,15 @@ Version 0.01
 =head2 new
 
     my $obj = JIP::Object->new;
+    my $obj = JIP::Object->new(proto => JIP::Object->new);;
+
+Construct a new L<JIP::Object> object.
 
 =head2 attr
 
     $obj = $obj->attr('x', get => 'x', set => 'set_x');
+
+Define a new property.
 
 =head2 method
 
@@ -265,6 +270,22 @@ Version 0.01
         my $self = shift;
         return $self->x;
     });
+
+Define a new method.
+
+=head2 proto
+
+A getter function.
+
+=head2 set_proto
+
+A setter function.
+
+=head2 own_method
+
+    $code = $obj->own_method('string value of a method name');
+
+The own_method returns CODE if object has a method of the specified name, undef if it does not.
 
 =head1 SEE ALSO
 
