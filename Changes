@@ -1,5 +1,8 @@
 Revision history for JIP-Object
 
+0.02    2015-07-26
+        Fixed filename in MANIFEST.
+
 0.01    2015-07-10
         First version, released on an unsuspecting world.
 
