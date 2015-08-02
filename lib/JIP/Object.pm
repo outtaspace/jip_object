@@ -231,74 +231,97 @@ Version 0.02
 
 =head1 SYNOPSIS
 
-    use Test::More;
     use JIP::Object;
 
     my $obj = JIP::Object->new;
-    ok $obj, 'got object';
 
-    # Public access to the "foo"
     $obj->has('foo', (get => '+', set => '+'));
-    is($obj->set_foo(42)->foo, 42);
+    $obj->set_foo(42)->foo; # 42
 
-    # Private access to the "bar"
-    $obj->has('bar', (get => '-', set => '-'));
-    is($obj->_set_bar(42)->_bar, 42);
-
-    # Create user-defined names for getters/setters
-    $obj->has('wtf' => (get => 'wtf_getter', set => 'wtf_setter'));
-    is($obj->wtf_setter(42)->wtf_getter, 42);
-
-    # Pass an optional first argument of setter to set
-    # a default value, it should be a constant or callback.
-    $obj->has('baz' => (get => '+', set => '+', default => 42));
-    is($self->set_baz->baz, 42);
-
-    $obj->has('qux' => (get => '+', set => '+', default => sub {
-        my $self = shift;
-        return $self->baz;
-    }));
-    is($self->set_qux->qux, 42);
-
-    # Define a new method
     $obj->method('say_foo', sub {
         my $self = shift;
         print $self->foo, "\n";
     });
+    $obj->say_foo;
 
-    done_testing();
+Inheritance with the prototype chain:
+
+    my $proto = JIP::Object->new;
+
+    # Creates an own method 'as_string' on $proto
+    $proto->method('as_string', sub { 'prototype' });
+
+    my $obj = JIP::Object->new(proto => $proto);
+
+    ref $obj->own_method('as_string'); # q{}
+    $obj->as_string;                   # q{prototype}
+
+    # Creates an own method 'as_string' on $obj
+    $obj->method('as_string', sub { 'object' });
+
+    # If the method is found in $obj, then proto is not checked.
+    ref $obj->own_method('as_string'); # q{CODE}
+    $obj->as_string;                   # q{object}
+
+    # The end of the prototype chain as undef.
+    ref $obj->proto->proto; # q{}
 
 =head1 METHODS
 
 =head2 new
 
+Construct a new L<JIP::Object> object.
+
     my $obj = JIP::Object->new;
     my $obj = JIP::Object->new(proto => JIP::Object->new);;
 
-Construct a new L<JIP::Object> object.
-
 =head2 has
-
-    $obj = $obj->has('x', get => 'x', set => 'set_x');
 
 Define a new property.
 
+    # Public
+    $obj->has('foo', (get => '+', set => '+'));
+    $obj->set_foo(42)->foo; # 42
+
+    # Private
+    $obj->has('bar', (get => '-', set => '-'));
+    $obj->_set_bar(42)->_bar; # 42
+
+    # Create user-defined names for getters/setters
+    $obj->has('wtf' => (get => 'wtf_getter', set => 'wtf_setter'));
+    $obj->wtf_setter(42)->wtf_getter; # 42
+
+    # Pass an optional first argument of setter to set
+    # a default value, it should be a constant or callback.
+    $obj->has('baz' => (get => '+', set => '+', default => 42));
+    ($self->set_baz->baz; # 42
+
+    $obj->has('qux' => (get => '+', set => '+', default => sub {
+        my $self = shift;
+        return $self->baz;
+    }));
+    $self->set_qux->qux; # 42
+
 =head2 method
+
+Define a new method.
 
     $obj = $obj->method('get_x', sub {
         my $self = shift;
         return $self->x;
     });
 
-Define a new method.
-
 =head2 proto
 
-A getter function.
+Returns the value of the 'proto' attribute.
+
+    $obj->proto;
 
 =head2 set_proto
 
-A setter function.
+Sets the value of the 'proto' attribute.
+
+    $obj->set_proto($proto);
 
 =head2 own_method
 
