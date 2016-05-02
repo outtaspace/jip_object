@@ -190,6 +190,7 @@ sub AUTOLOAD {
 sub proto {
     return $ARG[0]->{'proto'};
 }
+
 sub set_proto {
     $ARG[0]->{'proto'} = $ARG[1];
     return $ARG[0];

@@ -192,34 +192,36 @@ subtest 'The Universal class' => sub {
 };
 
 subtest 'proto' => sub {
-    plan tests => 16;
+    plan tests => 10;
 
-    my $proto_proto = JIP::Object->new->method('x', sub {
-        pass 'x() method is invoked';
-        return 'from x';
-    });
+    my $proto = JIP::Object->new;
+    my $obj   = JIP::Object->new(proto => $proto);
 
-    my $proto = JIP::Object->new(proto => $proto_proto)->method('y', sub {
-        pass 'y() method is invoked';
-        return 'from y';
-    });
-
-    my $obj = JIP::Object->new(proto => $proto);
-
-    is ref $obj->own_method('x'), q{};
+    # x() not in $proto, $obj
     is ref $proto->own_method('x'), q{};
-    is ref $proto->proto->own_method('x'), 'CODE';
+    is ref $obj->own_method('x'),   q{};
 
-    is ref $obj->own_method('y'), q{};
-    is ref $proto->own_method('y'), 'CODE';
-    is ref $proto->proto->own_method('y'), q{};
+    $proto->method('x', sub {
+        return 'from proto::x';
+    });
 
-    is $proto_proto->x, 'from x';
-    is $proto->x,       'from x';
-    is $obj->x,         'from x';
+    # x() only in $proto
+    is ref $proto->own_method('x'), 'CODE';
+    is ref $obj->own_method('x'),   q{};
 
-    is $proto->y, 'from y';
-    is $obj->y,   'from y';
+    # but, x() in prototype chain
+    is $proto->x, 'from proto::x';
+    is $obj->x,   'from proto::x';
+
+    $obj->method('x', sub {
+        return 'from obj::x';
+    });
+
+    is ref $proto->own_method('x'), 'CODE';
+    is ref $obj->own_method('x'),   'CODE';
+
+    is $proto->x, 'from proto::x';
+    is $obj->x,   'from obj::x';
 };
 
 subtest '_define_name_of_getter()' => sub {
