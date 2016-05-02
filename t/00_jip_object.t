@@ -6,7 +6,7 @@ use warnings FATAL => 'all';
 use Test::More;
 use English qw(-no_match_vars);
 
-plan tests => 8;
+plan tests => 10;
 
 subtest 'Require some module' => sub {
     plan tests => 4;
@@ -45,7 +45,7 @@ subtest 'new()' => sub {
 };
 
 subtest 'has()' => sub {
-    plan tests => 14;
+    plan tests => 17;
 
     eval { JIP::Object->has } or do {
         like $EVAL_ERROR, qr{^Can't \s call \s "has" \s as \s a \s class \s method}x;
@@ -58,6 +58,10 @@ subtest 'has()' => sub {
     };
     eval { $obj->has(q{}) } or do {
         like $EVAL_ERROR, qr{^Attribute \s not \s defined}x;
+    };
+
+    eval { $obj->has(42) } or do {
+        like $EVAL_ERROR, qr{^Attribute \s "42" \s invalid}x;
     };
 
     is $obj->has(attr_1 => (get => q{-}, set => q{-}))->_set_attr_1(1)->_attr_1, 1;
@@ -82,6 +86,13 @@ subtest 'has()' => sub {
     ))->set_attr_7(42)->attr_7, '42';
     is $obj->set_attr_7(undef)->attr_7, undef;
     is $obj->set_attr_7->attr_7, q{default_value};
+
+    $obj->has([qw(attr_8 attr_9)] => (
+        get => q{+},
+        set => q{+},
+    ));
+    is $obj->set_attr_8(8)->attr_8, 8;
+    is $obj->set_attr_9(9)->attr_9, 9;
 };
 
 subtest 'method()' => sub {
@@ -209,5 +220,37 @@ subtest 'proto' => sub {
 
     is $proto->y, 'from y';
     is $obj->y,   'from y';
+};
+
+subtest '_define_name_of_getter()' => sub {
+    plan tests => 4;
+
+    my $run = sub {
+        my %param = @ARG;
+        JIP::Object::_define_name_of_getter('foo', \%param);
+    };
+
+    is $run->(),           'foo';
+    is $run->(get => '+'), 'foo';
+
+    is $run->(get => '-'), '_foo';
+
+    is $run->(get => 'foo_getter'), 'foo_getter';
+};
+
+subtest '_define_name_of_setter()' => sub {
+    plan tests => 4;
+
+    my $run = sub {
+        my %param = @ARG;
+        JIP::Object::_define_name_of_setter('foo', \%param);
+    };
+
+    is $run->(),           'set_foo';
+    is $run->(set => '+'), 'set_foo';
+
+    is $run->(set => '-'), '_set_foo';
+
+    is $run->(set => 'foo_setter'), 'foo_setter';
 };
 

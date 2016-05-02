@@ -12,7 +12,7 @@ our $AUTOLOAD;
 
 my $maybe_set_subname = sub { $ARG[1]; };
 
-# Will be shipping with Perl 5.22
+# Supported on Perl 5.22+
 eval {
     require Sub::Util;
 
@@ -47,66 +47,61 @@ sub has {
 
     croak q{Attribute not defined} unless defined $attr and length $attr;
 
-    if (exists $param{'get'}) {
-        my ($method_name, $getter) = (q{}, $param{'get'});
+    my @patches;
 
-        if ($getter eq q{+}) {
-            $method_name = $attr;
-        }
-        elsif ($getter eq q{-}) {
-            $method_name = q{_}. $attr;
-        }
-        else {
-            $method_name = $getter;
-        }
+    for my $each_attr (@{ ref $attr eq 'ARRAY' ? $attr : [$attr] }) {
+        croak sprintf(q{Attribute "%s" invalid}, $each_attr)
+            unless $each_attr =~ m{^[a-zA-Z_]\w*$}x;
 
-        $self->_meta->{$method_name} = $maybe_set_subname->($method_name, sub {
+        my %patch;
+
+        # getter
+        $patch{_define_name_of_getter($each_attr, \%param)} = sub {
             my $self = shift;
             return $self->_stash->{$attr};
-        });
+        };
+
+        # setter
+        {
+            my $method_name = _define_name_of_setter($each_attr, \%param);
+
+            if (exists $param{'default'}) {
+                my $default_value = $param{'default'};
+
+                $patch{$method_name} = sub {
+                    my $self = shift;
+
+                    if (@ARG == 1) {
+                        $self->_stash->{$attr} = shift;
+                    }
+                    elsif (ref $default_value eq 'CODE') {
+                        $self->_stash->{$attr} = $maybe_set_subname->(
+                            'default_value',
+                            $default_value,
+                        )->($self);
+                    }
+                    else {
+                        $self->_stash->{$attr} = $default_value;
+                    }
+
+                    return $self;
+                };
+            }
+            else {
+                $patch{$method_name} = sub {
+                    my ($self, $value) = @ARG;
+                    $self->_stash->{$attr} = $value;
+                    return $self;
+                };
+            }
+        }
+
+        push @patches, \%patch;
     }
 
-    if (exists $param{'set'}) {
-        my ($method_name, $setter) = (q{}, $param{'set'});
-
-        if ($setter eq q{+}) {
-            $method_name = q{set_}. $attr;
-        }
-        elsif ($setter eq q{-}) {
-            $method_name = q{_set_}. $attr;
-        }
-        else {
-            $method_name = $setter;
-        }
-
-        if (exists $param{'default'}) {
-            my $default_value = $param{'default'};
-
-            $self->_meta->{$method_name} = $maybe_set_subname->($method_name, sub {
-                my $self = shift;
-
-                if (@ARG == 1) {
-                    $self->_stash->{$attr} = shift;
-                }
-                elsif (ref $default_value eq 'CODE') {
-                    $self->_stash->{$attr} = $maybe_set_subname->(
-                        'default_value',
-                        $default_value,
-                    )->($self);
-                }
-                else {
-                    $self->_stash->{$attr} = $default_value;
-                }
-
-                return $self;
-            });
-        }
-        else {
-            $self->_meta->{$method_name} = $maybe_set_subname->($method_name, sub {
-                my ($self, $value) = @ARG;
-                $self->_stash->{$attr} = $value;
-                return $self;
-            });
+    for my $each_patch (@patches) {
+        while (my ($method_name, $code) = each %{ $each_patch }) {
+            $self->_meta->{$method_name} = $maybe_set_subname->($method_name, $code);
         }
     }
 
@@ -192,13 +187,63 @@ sub AUTOLOAD {
     }
 }
 
-# private methods
 sub proto {
     return $ARG[0]->{'proto'};
 }
 sub set_proto {
     $ARG[0]->{'proto'} = $ARG[1];
     return $ARG[0];
+}
+
+# private methods
+sub _define_name_of_getter {
+    my ($attr, $param) = @ARG;
+
+    my $method_name;
+
+    if (exists $param->{'get'}) {
+        my $getter = $param->{'get'};
+
+        if ($getter eq q{+}) {
+            $method_name = $attr;
+        }
+        elsif ($getter eq q{-}) {
+            $method_name = q{_}. $attr;
+        }
+        else {
+            $method_name = $getter;
+        }
+    }
+    else {
+        $method_name = $attr;
+    }
+
+    return $method_name;
+}
+
+sub _define_name_of_setter {
+    my ($attr, $param) = @ARG;
+
+    my $method_name;
+
+    if (exists $param->{'set'}) {
+        my $setter = $param->{'set'};
+
+        if ($setter eq q{+}) {
+            $method_name = q{set_}. $attr;
+        }
+        elsif ($setter eq q{-}) {
+            $method_name = q{_set_}. $attr;
+        }
+        else {
+            $method_name = $setter;
+        }
+    }
+    else {
+        $method_name = q{set_}. $attr;
+    }
+
+    return $method_name;
 }
 
 sub _meta {
@@ -301,6 +346,9 @@ Define a new property.
         return $self->baz;
     }));
     $self->set_qux->qux; # 42
+
+    # Declaring multiple attributes in a single declaration
+    $obj->has([qw(one two three)]);
 
 =head2 method
 
