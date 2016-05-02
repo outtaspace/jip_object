@@ -7,7 +7,7 @@ use Carp qw(croak);
 use Scalar::Util qw(blessed);
 use English qw(-no_match_vars);
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 our $AUTOLOAD;
 
 my $maybe_set_subname = sub { $ARG[1]; };
@@ -276,7 +276,7 @@ JIP::Object - A simple object system.
 
 =head1 VERSION
 
-Version 0.02
+Version 0.03
 
 =head1 SYNOPSIS
 
