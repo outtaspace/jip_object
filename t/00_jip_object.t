@@ -96,7 +96,7 @@ subtest 'has()' => sub {
 };
 
 subtest 'method()' => sub {
-    plan tests => 6;
+    plan tests => 7;
 
     eval { JIP::Object->method } or do {
         like $EVAL_ERROR, qr{^Can't \s call \s "method" \s as \s a \s class \s method}x;
@@ -109,6 +109,9 @@ subtest 'method()' => sub {
     };
     eval { $obj->method(q{}) } or do {
         like $EVAL_ERROR, qr{^First \s argument \s must \s be \s a \s non \s empty \s string}x;
+    };
+    eval { $obj->method(42) } or do {
+        like $EVAL_ERROR, qr{^First \s argument \s "42" \s invalid}x;
     };
     eval { $obj->method(q{foo}, undef) } or do {
         like $EVAL_ERROR, qr{^Second \s argument \s must \s be \s a \s code \s ref}x;

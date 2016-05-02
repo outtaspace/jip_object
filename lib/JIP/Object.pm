@@ -117,6 +117,9 @@ sub method {
     croak q{First argument must be a non empty string}
         unless defined $method_name and length $method_name;
 
+    croak sprintf(q{First argument "%s" invalid}, $method_name)
+        unless $method_name =~ m{^[a-zA-Z_]\w*$}x;
+
     croak q{Second argument must be a code ref}
         unless ref($code) eq 'CODE';
 
