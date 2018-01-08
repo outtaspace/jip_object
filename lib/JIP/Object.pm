@@ -276,7 +276,7 @@ JIP::Object - A simple object system.
 
 =head1 VERSION
 
-Version 0.03
+This document describes C<JIP::Object> version C<0.03>.
 
 =head1 SYNOPSIS
 
@@ -383,7 +383,7 @@ The own_method returns CODE if object has a method of the specified name, undef 
 
 =head1 SEE ALSO
 
-Mock::Quick::Object.
+L<Mock::Quick::Object>.
 
 =head1 AUTHOR
 
@@ -391,7 +391,7 @@ Vladimir Zhavoronkov, C<< <flyweight at yandex.ru> >>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2015 Vladimir Zhavoronkov.
+Copyright 2015-2018 Vladimir Zhavoronkov.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the the Artistic License (2.0). You may obtain a
